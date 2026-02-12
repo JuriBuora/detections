@@ -1,12 +1,13 @@
-// Title: SSH brute force (Linux auth logs) - concept KQL
+// Title: SSH brute force (Linux)
 // Status: draft
-// Purpose: Detect many failed SSH logins from same IP in short window.
-// Notes: Adapt table/fields based on your data source (Syslog, LinuxSyslog, etc.).
+// Purpose: Detect high-volume failed SSH logins from same source in short window.
+// Data: Syslog connector (table names/fields vary by setup).
 
-// Example (Sentinel workspace must have Linux auth logs ingested):
+// Concept query (adapt to your workspace):
 // Syslog
-// | where Facility == "auth" or SyslogMessage has "sshd"
-// | where SyslogMessage has "Failed password"
+// | where TimeGenerated > ago(24h)
+// | where SyslogMessage has "sshd" and SyslogMessage has "Failed password"
 // | extend SrcIp = extract(@"\b(\d{1,3}\.){3}\d{1,3}\b", 0, SyslogMessage)
-// | summarize FailCount=count() by SrcIp, bin(TimeGenerated, 5m)
+// | where isnotempty(SrcIp)
+// | summarize FailCount=count(), TargetUsers=dcount(SyslogMessage) by SrcIp, bin(TimeGenerated, 5m)
 // | where FailCount >= 10
