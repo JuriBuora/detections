@@ -1,0 +1,7 @@
+
+# macOS junk
+.DS_Store
+**/.DS_Store
+
+# local tests folder (use tracked samples only)
+tests/
