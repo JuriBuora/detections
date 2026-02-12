@@ -1,0 +1,12 @@
+// Title: RDP brute force (Windows) - concept KQL
+// Status: draft
+// Purpose: Detect many failed RDP logons from same source in short window.
+// Notes: Field/table names vary by connector (SecurityEvent, WindowsEvent, etc.).
+
+// Common idea (adapt):
+// SecurityEvent
+// | where EventID == 4625
+// | where LogonType == 10  // RemoteInteractive (often RDP)
+// | extend SrcIp = tostring(IpAddress)
+// | summarize FailCount=count(), TargetUsers=dcount(Account) by SrcIp, bin(TimeGenerated, 5m)
+// | where FailCount >= 15
