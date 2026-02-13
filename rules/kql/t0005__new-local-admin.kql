@@ -1,7 +1,58 @@
-// Title: New local admin created - concept KQL
+// Title: New account and/or privileged group membership change (Windows)
 // Status: draft
-// Data: Windows SecurityEvent (varies). Common signals: new user created (4720), added to local admins (4732/4728 depending on group scope).
+// Purpose: Detect creation of new accounts and additions to privileged groups (persistence / privilege escalation).
+// Data: Windows Security logs (often in SecurityEvent). Field names may vary by connector.
+//
+// Key Event IDs:
+// - 4720: User account created
+// - 4732: Member added to security-enabled local group
+// - 4728: Member added to security-enabled global group
+// - 4756: Member added to security-enabled universal group
 
-// SecurityEvent
-// | where EventID in (4720, 4732, 4728)
-// | project TimeGenerated, Computer, Account, TargetAccount=tostring(TargetUserName), EventID, Activity
+SecurityEvent
+| where EventID in (4720, 4728, 4732, 4756)
+
+// Parse EventData when available (Sentinel often stores key fields here)
+| extend ED = parse_json(EventData)
+
+// Normalize actor (who did it)
+| extend Actor =
+    coalesce(
+      tostring(ED.SubjectUserName),
+      tostring(SubjectUserName),
+      tostring(Account)
+    )
+
+// Normalize target member/user (who was created or added)
+| extend TargetAccount =
+    coalesce(
+      tostring(ED.TargetUserName),      // often present for 4720 (created user)
+      tostring(TargetUserName),
+      tostring(ED.MemberName),          // member added to group
+      tostring(MemberName)
+    )
+
+// Normalize group name for group-add events
+// Note: for 4728/4732/4756, the group name is commonly in TargetUserName (event-specific schema)
+| extend GroupName =
+    coalesce(
+      tostring(ED.GroupName),
+      tostring(GroupName),
+      tostring(ED.TargetUserName),
+      tostring(TargetUserName)
+    )
+
+| extend Action =
+    case(
+      EventID == 4720, "account_created",
+      EventID in (4728,4732,4756), "added_to_group",
+      "other"
+    )
+
+// Focus on privileged groups for group-add events
+| where Action == "account_created"
+   or (Action == "added_to_group" and GroupName has_any ("Administrators","Domain Admins"))
+
+// Useful output for triage
+| project TimeGenerated, Computer, EventID, Action, Actor, TargetAccount, GroupName, Activity
+| order by TimeGenerated desc

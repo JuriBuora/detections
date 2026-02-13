@@ -1,0 +1,32 @@
+// Title: New user then added to privileged group shortly after
+// Status: draft
+// Purpose: High-confidence persistence pattern (create account -> elevate).
+// Data: Windows SecurityEvent
+
+let window = 1h;
+
+let NewUsers =
+SecurityEvent
+| where EventID == 4720
+| extend ED = parse_json(EventData)
+| extend Actor = coalesce(tostring(ED.SubjectUserName), tostring(SubjectUserName), tostring(Account))
+| extend NewUser = coalesce(tostring(ED.TargetUserName), tostring(TargetUserName))
+| where isnotempty(NewUser)
+| project NewUserTime=TimeGenerated, Computer, Actor, NewUser;
+
+let PrivAdds =
+SecurityEvent
+| where EventID in (4728, 4732, 4756)
+| extend ED = parse_json(EventData)
+| extend Actor2 = coalesce(tostring(ED.SubjectUserName), tostring(SubjectUserName), tostring(Account))
+| extend Member = coalesce(tostring(ED.MemberName), tostring(MemberName), tostring(ED.TargetUserName), tostring(TargetUserName))
+| extend GroupName = coalesce(tostring(ED.GroupName), tostring(GroupName), tostring(ED.TargetUserName), tostring(TargetUserName))
+| where GroupName has_any ("Administrators","Domain Admins")
+| project AddTime=TimeGenerated, Computer, Actor2, Member, GroupName;
+
+NewUsers
+| join kind=innerunique (PrivAdds) on Computer
+| where AddTime between (NewUserTime .. NewUserTime + window)
+| where Member has NewUser or NewUser has Member
+| project NewUserTime, AddTime, Computer, Actor, Actor2, NewUser, Member, GroupName
+| order by AddTime desc
