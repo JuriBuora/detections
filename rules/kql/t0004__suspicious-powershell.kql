@@ -1,10 +1,48 @@
-// Title: Suspicious PowerShell (encoded / download / IEX) - concept KQL
+// Title: Suspicious PowerShell (encoded / download / IEX) - tightened concept KQL
 // Status: draft
-// Data: Endpoint process telemetry (e.g., Microsoft Defender for Endpoint: DeviceProcessEvents)
-
+// Purpose: Detect PowerShell execution patterns commonly used in attacks (obfuscation + download/execute).
+// Data: Endpoint process telemetry (e.g., Microsoft Defender for Endpoint: DeviceProcessEvents).
 //
-// DeviceProcessEvents
-// | where FileName =~ "powershell.exe" or FileName =~ "pwsh.exe"
-// | extend Cmd = tostring(ProcessCommandLine)
-// | where Cmd has_any ("-enc", "-encodedcommand", "IEX", "Invoke-Expression", "DownloadString", "FromBase64String", "WebClient", "Invoke-WebRequest", "curl", "wget")
-// | project TimeGenerated, DeviceName, AccountName, FileName, Cmd, InitiatingProcessFileName
+// Notes:
+// - This is a concept query; fields may vary slightly by environment.
+// - Key improvements: stronger EncodedCommand detection + parent-process context.
+
+DeviceProcessEvents
+| where FileName in~ ("powershell.exe","pwsh.exe")
+| extend Cmd = tostring(ProcessCommandLine)
+| extend Parent = tostring(InitiatingProcessFileName)
+| extend ParentCmd = tostring(InitiatingProcessCommandLine)
+
+// Strong encoded-command pattern: -enc/-EncodedCommand followed by long Base64 blob
+| extend HasLongEncoded =
+    Cmd matches regex @"(?i)\s-(enc|encodedcommand)\s+[A-Za-z0-9+/=]{50,}"
+
+// Common suspicious keywords (download/execute + obfuscation)
+| extend HasSuspiciousKeywords =
+    Cmd has_any (
+        "IEX","Invoke-Expression",
+        "DownloadString","WebClient","Invoke-WebRequest",
+        "FromBase64String",
+        "http://","https://"
+    )
+
+// Optional: Parent-process context (high-signal launchers)
+| extend SuspiciousParent =
+    Parent in~ ("winword.exe","excel.exe","powerpnt.exe","outlook.exe","onenote.exe","mshta.exe","wscript.exe","cscript.exe","rundll32.exe")
+
+// Keep events that are either strongly encoded OR suspicious keywords,
+// and (optionally) bump priority when parent is suspicious.
+| where HasLongEncoded or HasSuspiciousKeywords
+
+| project
+    TimeGenerated,
+    DeviceName,
+    AccountName,
+    FileName,
+    Cmd,
+    Parent,
+    ParentCmd,
+    HasLongEncoded,
+    HasSuspiciousKeywords,
+    SuspiciousParent
+| order by TimeGenerated desc
