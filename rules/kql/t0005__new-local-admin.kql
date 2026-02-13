@@ -1,0 +1,7 @@
+// Title: New local admin created - concept KQL
+// Status: draft
+// Data: Windows SecurityEvent (varies). Common signals: new user created (4720), added to local admins (4732/4728 depending on group scope).
+
+// SecurityEvent
+// | where EventID in (4720, 4732, 4728)
+// | project TimeGenerated, Computer, Account, TargetAccount=tostring(TargetUserName), EventID, Activity

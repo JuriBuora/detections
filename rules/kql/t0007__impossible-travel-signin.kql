@@ -1,0 +1,7 @@
+// Title: Impossible travel / unusual sign-in - concept KQL
+// Status: draft
+// Data: Identity provider sign-in logs (e.g., Entra ID / Azure AD SigninLogs)
+
+// SigninLogs
+// | where ResultType != 0  // or include both success/failure depending on logic
+// | project TimeGenerated, UserPrincipalName, IPAddress, Location, AppDisplayName, ResultType

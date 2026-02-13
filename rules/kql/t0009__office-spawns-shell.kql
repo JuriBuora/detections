@@ -1,0 +1,8 @@
+// Title: Office spawning cmd/powershell - concept KQL
+// Status: draft
+// Data: EDR process telemetry (e.g., DeviceProcessEvents)
+
+// DeviceProcessEvents
+// | where InitiatingProcessFileName in~ ("winword.exe","excel.exe","powerpnt.exe","outlook.exe")
+// | where FileName in~ ("cmd.exe","powershell.exe","pwsh.exe","wscript.exe","cscript.exe")
+// | project TimeGenerated, DeviceName, AccountName, InitiatingProcessFileName, FileName, ProcessCommandLine

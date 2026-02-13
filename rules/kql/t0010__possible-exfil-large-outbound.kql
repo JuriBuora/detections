@@ -1,0 +1,8 @@
+// Title: Possible data exfiltration (large outbound) - concept KQL
+// Status: draft
+// Data: Network logs (firewall/proxy) or endpoint network telemetry
+
+// Example concept (table varies):
+// CommonSecurityLog
+// | summarize TotalBytesOut=sum(SentBytes) by SourceIP, DestinationIP, bin(TimeGenerated, 1h)
+// | where TotalBytesOut > 500000000  // ~500MB

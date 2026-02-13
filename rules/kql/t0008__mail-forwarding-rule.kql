@@ -1,0 +1,7 @@
+// Title: Mailbox forwarding rule created - concept KQL
+// Status: draft
+// Data: Microsoft 365 audit logs (e.g., OfficeActivity)
+
+// OfficeActivity
+// | where Operation has_any ("New-InboxRule", "Set-InboxRule")
+// | project TimeGenerated, UserId, Operation, ClientIP, Parameters

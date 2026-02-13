@@ -1,0 +1,10 @@
+// Title: Suspicious PowerShell (encoded / download / IEX) - concept KQL
+// Status: draft
+// Data: Endpoint process telemetry (e.g., Microsoft Defender for Endpoint: DeviceProcessEvents)
+
+//
+// DeviceProcessEvents
+// | where FileName =~ "powershell.exe" or FileName =~ "pwsh.exe"
+// | extend Cmd = tostring(ProcessCommandLine)
+// | where Cmd has_any ("-enc", "-encodedcommand", "IEX", "Invoke-Expression", "DownloadString", "FromBase64String", "WebClient", "Invoke-WebRequest", "curl", "wget")
+// | project TimeGenerated, DeviceName, AccountName, FileName, Cmd, InitiatingProcessFileName

@@ -1,0 +1,7 @@
+// Title: New service or scheduled task created - concept KQL
+// Status: draft
+// Data: Windows Security logs (4697 for service install, 4698 for scheduled task created) or Sysmon equivalents.
+
+// SecurityEvent
+// | where EventID in (4697, 4698)
+// | project TimeGenerated, Computer, Account, EventID, Activity
