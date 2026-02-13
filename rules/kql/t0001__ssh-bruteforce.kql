@@ -1,13 +1,13 @@
 // Title: SSH brute force (Linux)
 // Status: draft
-// Purpose: Detect high-volume failed SSH logins from same source in short window.
-// Data: Syslog connector (table names/fields vary by setup).
+// Purpose: Detect high-volume failed SSH logins from same source in a short window.
+// Data: Linux auth via Syslog (table/fields can vary by connector).
 
-// Concept query (adapt to your workspace):
-// Syslog
-// | where TimeGenerated > ago(24h)
-// | where SyslogMessage has "sshd" and SyslogMessage has "Failed password"
-// | extend SrcIp = extract(@"\b(\d{1,3}\.){3}\d{1,3}\b", 0, SyslogMessage)
-// | where isnotempty(SrcIp)
-// | summarize FailCount=count(), TargetUsers=dcount(SyslogMessage) by SrcIp, bin(TimeGenerated, 5m)
-// | where FailCount >= 10
+Syslog
+| where TimeGenerated > ago(24h)
+| where SyslogMessage has "sshd" and SyslogMessage has "Failed password"
+| extend SrcIp = extract(@"\b(\d{1,3}\.){3}\d{1,3}\b", 0, SyslogMessage)
+| extend TargetUser = extract(@"Failed password for (invalid user )?([A-Za-z0-9._-]+) from", 2, SyslogMessage)
+| where isnotempty(SrcIp)
+| summarize FailCount=count(), DistinctUsers=dcount(TargetUser) by SrcIp, bin(TimeGenerated, 5m)
+| where FailCount >= 10
