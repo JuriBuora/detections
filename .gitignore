@@ -3,5 +3,5 @@
 .DS_Store
 **/.DS_Store
 
-# local tests folder (use tracked samples only)
-tests/
+# local ad hoc test outputs
+tests/output/

